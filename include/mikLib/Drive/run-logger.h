@@ -19,16 +19,19 @@
  * SD transaction on a 20 ms cadence and disturb the very timing being measured. A 15 second run is
  * roughly 750 rows and about 20 kB, so the buffer is not a concern.
  *
- * Usage, wrapped around whichever auton is selected:
+ * auton() in main.cpp already wraps every autonomous run in start() and stop(), so a match is
+ * recorded with nothing added. Call them yourself only to record a run started some other way,
+ * such as the brain screen's test button. Calling stop() from inside an auton ends the recording
+ * at that point, and the stop() in auton() then has nothing left to write.
  * @code
  * mik::run_log::start("run.csv");
- * red_left_elim(false, var, false);
+ * // run the routine
  * mik::run_log::stop();
  * @endcode
  */
 namespace mik::run_log {
 
-    /** @brief Hz the logger samples at. 50 is well under the 100 Hz odometry loop and keeps files small. */
+    /** @brief Hz the logger samples at. Odometry updates at 200 Hz; 50 is plenty to draw the path and keeps files small. */
     constexpr int SAMPLE_HZ = 50;
 
     /**

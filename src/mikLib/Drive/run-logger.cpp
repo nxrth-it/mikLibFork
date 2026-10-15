@@ -45,8 +45,11 @@ namespace {
      *
      * savefile replaces the file rather than appending, so each run overwrites the last. Pass a
      * different name to start() when several runs need keeping.
+     *
+     * @return True if every byte reached the card. savefile reports how many bytes it saved, which
+     *         falls short when the card is pulled mid-run or the write otherwise fails.
      */
-    void flush() {
+    bool flush() {
         std::string out = "# mikGen run log v1\n";
         out += "t_ms,x,y,theta\n";
 
@@ -58,7 +61,8 @@ namespace {
         }
 
         std::vector<uint8_t> bytes(out.begin(), out.end());
-        Brain.SDcard.savefile(destination.c_str(), bytes.data(), bytes.size());
+        const int32_t saved = Brain.SDcard.savefile(destination.c_str(), bytes.data(), bytes.size());
+        return saved == (int32_t)bytes.size();
     }
 }
 
@@ -92,8 +96,11 @@ void stop() {
     vex::this_thread::sleep_for(1000 / SAMPLE_HZ + 10);
     sampler.stop();
 
-    flush();
-    print(("run_log: wrote " + to_string(buffer.size()) + " rows to " + destination).c_str(), mik::green);
+    if (flush()) {
+        print(("run_log: wrote " + to_string(buffer.size()) + " rows to " + destination).c_str(), mik::green);
+    } else {
+        print(("run_log: failed to write " + destination + " to the SD card").c_str(), mik::bright_red);
+    }
 }
 
 bool is_running() { return running; }
